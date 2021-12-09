@@ -28,3 +28,9 @@ def player_look_ahead_score(player_num, grid: Grid):
                         look_ahead_spots.add(neighbor)
         return len(look_ahead_spots)
 
+def trap_probability(position,player_num,grid: Grid):
+        opp_num = 3 - player_num
+        opp_pos = grid.find(opp_num)
+        distance = manhattan_distance(position,opp_pos)
+        p = (1-(0.05 * (distance-1)))
+        return p

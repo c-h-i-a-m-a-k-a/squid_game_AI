@@ -59,26 +59,48 @@ class PlayerAI(BaseAI):
             h = -1 * (look_ahead_score + man_dist)
             moves.append(tuple([child[0],child[1],h]))
 
+        Max = ('x','y',float('inf'))
+        Min = ('x','y',float('-inf'))
+
         # Implementing minimax
-        def minimax(d,index,mode,moves,max_d,last_ind):
+        def expectiminimax(d,index,mode,moves,max_d,last_ind,alpha,beta):
             if d == max_d:
                 try:
                     return moves[index]
                 except:
                     return moves[last_ind]
 
-            # Mode: 0 --> Mininimize, 1 --> Maximize
+            # Mode: 0 --> Mininimize, 1 --> Maximize, 2 --> Chance
             # Will expand later to add Max, Min, and Chance
-            if mode:
-                leaf_1 = minimax(d+1,index*2,False,moves,max_d,index)
-                leaf_2 = minimax(d+1,index*2 + 1,False,moves,max_d,index)
-                return max([leaf_1,leaf_2], key= lambda x: x[2])
-            else:
-                leaf_1 = minimax(d + 1, index * 2, True, moves, max_d,index)
-                leaf_2 = minimax(d + 1, index * 2 + 1, True, moves, max_d,index)
-                return min([leaf_1,leaf_2], key= lambda x: x[2])
 
-        result = minimax(0,0,True,moves,round(math.log(len(moves),2)),0)
+            # MAX
+            if mode == 1:
+                best = Min
+                for i in range(2):
+                    leaf = expectiminimax(d+1,index*2 + i,False,moves,max_d,index,alpha,beta)
+                    best = max([best,leaf], key= lambda x: x[2])
+                    alpha = max([alpha,best], key= lambda x: x[2])
+
+                    if beta[2] <= alpha[2]:
+                        break
+                return best
+            #MIN
+            elif mode == 0:
+                best = Max
+                for i in range(2):
+                    leaf = expectiminimax(d + 1, index * 2 + i, 2, moves, max_d,index,alpha,beta)
+                    best = min([best,leaf], key= lambda x: x[2])
+                    beta = min([beta, leaf], key=lambda x: x[2])
+                    if beta[2] <= alpha[2]:
+                        break
+                return best
+            #CHANCE
+            else:
+                leaf_1 = expectiminimax(d + 1, index * 2, True, moves, max_d, index, alpha, beta)
+                leaf_2 = expectiminimax(d + 1, index * 2 + 1, True, moves, max_d, index, alpha, beta)
+                return min([leaf_1,leaf_2], key= lambda x: Utils.trap_probability(tuple([x[0],x[1]]), self.player_num, grid))
+
+        result = expectiminimax(0,0,True,moves,round(math.log(len(moves),2)),0,Min,Max)
 
         return tuple([result[0],result[1]])
 
